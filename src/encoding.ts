@@ -1,5 +1,7 @@
 // utility for encoding mapping
+import {AggregateOp} from './aggregate';
 import {Channel, CHANNELS, supportMark} from './channel';
+import {CompositeAggregate} from './compositemark';
 import {Facet} from './facet';
 import {ChannelDef, ConditionalValueDef, FieldDef, isFieldDef, isValueDef, LegendFieldDef, normalize, OrderFieldDef, PositionFieldDef, TextFieldDef, ValueDef} from './fielddef';
 import * as log from './log';

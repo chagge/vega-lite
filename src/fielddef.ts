@@ -5,6 +5,7 @@ import {AGGREGATE_OP_INDEX, AggregateOp} from './aggregate';
 import {Axis} from './axis';
 import {autoMaxBins, Bin, binToString} from './bin';
 import {Channel, rangeType} from './channel';
+import {CompositeAggregate} from './compositemark';
 import {Config} from './config';
 import {Legend} from './legend';
 import * as log from './log';
@@ -64,7 +65,7 @@ export interface FieldDef {
    * Aggregation function for the field
    * (e.g., `mean`, `sum`, `median`, `min`, `max`, `count`).
    */
-  aggregate?: AggregateOp;
+  aggregate?: AggregateOp | CompositeAggregate;
 
   /**
    * Title for axis or legend.

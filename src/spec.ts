@@ -142,21 +142,21 @@ export function isLayerSpec(spec: GenericSpec<GenericUnitSpec<any, any>>): spec 
  * Decompose extended unit specs into composition of pure unit specs.
  */
 // TODO: consider moving this to another file.  Maybe vl.spec.normalize or vl.normalize
-export function normalize(spec: TopLevelExtendedSpec): Spec {
+export function normalize(spec: TopLevelExtendedSpec, config: Config): Spec {
   if (isFacetSpec(spec)) {
-    return normalizeFacet(spec, spec.config);
+    return normalizeFacet(spec, config);
   }
   if (isLayerSpec(spec)) {
-    return normalizeLayer(spec, spec.config);
+    return normalizeLayer(spec, config);
   }
   if (isUnitSpec(spec)) {
     const hasRow = channelHasField(spec.encoding, ROW);
     const hasColumn = channelHasField(spec.encoding, COLUMN);
 
     if (hasRow || hasColumn) {
-      return normalizeFacetedUnit(spec, spec.config);
+      return normalizeFacetedUnit(spec, config);
     }
-    return normalizeNonFacetUnit(spec, spec.config);
+    return normalizeNonFacetUnit(spec, config);
   }
   throw new Error(log.message.INVALID_SPEC);
 }
@@ -232,7 +232,7 @@ function normalizeNonFacetUnit(spec: GenericUnitSpec<string | MarkDef, Encoding>
 
     return spec; // Nothing to normalize
   } else {
-    return compositeMark.normalize(spec);
+    return compositeMark.normalize(spec, config);
   }
 }
 
