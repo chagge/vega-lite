@@ -18,6 +18,8 @@ export interface TextHeaderParams {
 
   offset?: number;
 
+  roleType?: 'header' | 'title';
+
   textOrient?: Orient;
 
   textRole: string;
@@ -30,7 +32,7 @@ export interface TextHeaderParams {
 }
 
 export function getTextHeader(params: TextHeaderParams): VgMarkGroup {
-  const {channel, name, from, groupEncode, offset, textOrient, textRole, textEncodeMixins, textRef, positionRef} = params;
+  const {channel, name, from, groupEncode, offset, roleType, textOrient, textRole, textEncodeMixins, textRef, positionRef} = params;
 
   const positionChannel = channel === 'row' ? 'y' : 'x';
   const offsetChannel = channel === 'row' ? 'x' : 'y';
@@ -40,7 +42,7 @@ export function getTextHeader(params: TextHeaderParams): VgMarkGroup {
 
   return {
     name,
-    role: `${channel}-header`,
+    role: `${channel}-${roleType}`,
     type: 'group',
     ...(from ? {from} : {}),
     ...(groupEncode ? {encode: {update: groupEncode}} : {}),

@@ -100,7 +100,8 @@ describe('FacetModel', function() {
       });
       const layout = model.assembleLayout();
       assert.deepEqual<VgLayout>(layout, {
-        padding: {row: 10, column: 10, header: 10}, // TODO: allow customizing padding
+        padding: {row: 10, column: 10},
+        offset: 10,
         columns: 1,
         bounds: 'full'
       });

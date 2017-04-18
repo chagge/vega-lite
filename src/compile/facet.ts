@@ -207,15 +207,23 @@ export class FacetModel extends ModelWithField {
   }
 
   public assembleLayout(): VgLayout {
+    const columns = this.channelHasField('column') ? {
+      signal: this.columnDistinctSignal()
+    } : 1;
+
+    // TODO: determine default align based on shared / independent scales
+
     return {
-      padding: {row: 10, column: 10, header: 10},
-      columns: 1,
+      padding: {row: 10, column: 10},
+
+      // TODO: support offset for rowHeader/rowFooter/rowTitle/columnHeader/columnFooter/columnTitle
+      offset: 10,
+      columns,
       bounds: 'full'
     };
   }
 
   public assembleLayoutSignals(): VgSignal[] {
-    // FIXME correct this for column
     return [];
   }
 
@@ -234,43 +242,39 @@ export class FacetModel extends ModelWithField {
   }
 
   public assembleMarks(): VgEncodeEntry[] {
-    const data = assembleFacetData(this.component.data.facetRoot);
+    const facetRoot = this.component.data.facetRoot;
+    const data = assembleFacetData(facetRoot);
 
     const mark = this.component.mark[0];
 
     // correct the name of the faceted data source
-    mark.from.facet.name = this.component.data.facetRoot.name;
-    mark.from.facet.data = this.component.data.facetRoot.data;
+    mark.from.facet = {
+      ...mark.from.facet,
+      name: facetRoot.name,
+      data: facetRoot.data
+    };
 
-    const marks = [].concat(
-      // axisGroup is a mapping to VgMarkGroup
-      vals(this.component.axisGroups),
-      this.assembleLabelGroups(),
-      extend(mark, data.length > 0 ? {data: data} : {}, this.child.assembleGroup())
-    ).map(this.correctDataNames);
+    const marks = [];
+    if (this.channelHasField('column')) {
+      // TODO: make getTitleGroup a private method in this class
+      marks.push(getTitleGroup(this, 'column'));
+    }
 
-    const columns = this.channelHasField('column') ? {
-      signal: this.columnDistinctSignal()
-    } : 1;
+    if (this.channelHasField('row')) {
+      marks.push(getTitleGroup(this, 'row'));
+    }
 
-    return [].concat(
-        [{
-        type: 'group',
-        layout: {
-          padding: {
-            // TODO: allow customizing padding
-            row: 10,
-            column: 10,
-            header: 10
-          },
-          columns,
-          bounds: 'full' // TODO:
-        },
-        marks
-      }],
-      this.channelHasField('column') ? [getTitleGroup(this, 'column')] : [],
-      this.channelHasField('row') ? [getTitleGroup(this, 'row')] : [],
-    );
+    // vals(this.component.axisGroups),
+    // this.assembleLabelGroups(),
+
+
+    marks.push({
+      ...(data.length > 0 ? {data: data} : {}),
+      ...mark,
+      ...this.child.assembleGroup()
+    });
+
+    return marks.map(this.correctDataNames);
   }
 
   public channels() {
@@ -389,6 +393,7 @@ export function getTitleGroup(model: FacetModel, channel: 'row' | 'column') {
   return getTextHeader({
     channel,
     name: model.getName(`${channel}-title`),
+    roleType: 'title',
 
     // TODO: support customization
     textEncodeMixins: {
