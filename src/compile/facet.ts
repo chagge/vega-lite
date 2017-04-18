@@ -23,7 +23,8 @@ import {gridShow} from './axis/rules';
 import {buildModel} from './common';
 import {assembleData, assembleFacetData, FACET_SCALE_PREFIX} from './data/assemble';
 import {parseData} from './data/parse';
-import {getTextHeader} from './layout/header';
+import {getHeaderType, getTextHeader, HeaderChannel, HeaderComponent, LayoutHeaderComponent} from './layout/header';
+import {labels} from './legend/encode';
 import {Model, ModelWithField} from './model';
 import {RepeaterValue, replaceRepeaterInFacet} from './repeat';
 import parseScaleComponent from './scale/parse';
@@ -153,23 +154,70 @@ export class FacetModel extends ModelWithField {
     }];
   }
 
-  public parseAxis() {
-    this.child.parseAxis();
-    // FIXME: Correct write parseAxis logic
-    this.component.axes = {};
+  // TODO: rename to parseAxisAndHeaders
+  public parseAxisAndHeader() {
+    this.child.parseAxisAndHeader();
+
+    this.parseHeader('column');
+    this.parseHeader('row');
+
+    this.mergeChildAxis('x');
+    this.mergeChildAxis('y');
   }
 
-  public parseAxisGroup() {
-    // TODO: with nesting, we might need to consider calling child
-    // this.child.parseAxisGroup();
+  private parseHeader(channel: HeaderChannel) {
 
-    const xAxisGroup = parseAxisGroups(this, X);
-    const yAxisGroup = parseAxisGroups(this, Y);
+    if (this.channelHasField(channel)) {
+      let title = fieldDefTitle(this.facet[channel], this.config);
 
-    this.component.axisGroups = extend(
-      xAxisGroup ? {x: xAxisGroup} : {},
-      yAxisGroup ? {y: yAxisGroup} : {}
-    );
+      if (this.child.component.layoutHeaders[channel].title) {
+        // merge title with child to produce "Title / Subtitle / Sub-subtitle"
+        title += ' / ' + this.child.component.layoutHeaders[channel].title;
+        this.child.component.layoutHeaders[channel].title = null;
+      }
+
+
+      this.component.layoutHeaders[channel] = {
+        title,
+        field: this.field(channel),
+        header: this.makeHeaderComponent(channel, true)
+      };
+    }
+  }
+
+  private makeHeaderComponent(channel: HeaderChannel, labels: boolean): HeaderComponent {
+    const sizeChannel = channel === 'row' ? 'height' : 'width';
+
+    return {
+      labels,
+      sizeSignal: this.child.getSizeSignalRef(sizeChannel),
+      axes: []
+    };
+  }
+
+  private mergeChildAxis(channel: 'x' | 'y') {
+    const {child} = this;
+    if (child.component.axes[channel]) {
+      // TODO: read these from the resolve syntax
+      const scaleResolve = 'shared';
+      const axisResolve = 'shared';
+
+      if (scaleResolve === 'shared' && axisResolve === 'shared') {
+        // For shared axis, move the axes to facet's header or footer
+        const headerChannel = channel === 'x' ? 'column' : 'row';
+
+        const layoutHeader = this.component.layoutHeaders[headerChannel];
+        for (const axis of child.component.axes[channel].axes) {
+          const headerType = getHeaderType(axis.orient);
+          layoutHeader[headerType] = layoutHeader[headerType] ||
+            this.makeHeaderComponent(headerChannel, false);
+          layoutHeader[headerType].axes.push(axis);
+        }
+        child.component.axes[channel].axes = [];
+      } else {
+        // Otherwise do nothing
+      }
+    }
   }
 
   public parseLegend() {
@@ -254,25 +302,11 @@ export class FacetModel extends ModelWithField {
       data: facetRoot.data
     };
 
-    const marks = [];
-    if (this.channelHasField('column')) {
-      // TODO: make getTitleGroup a private method in this class
-      marks.push(getTitleGroup(this, 'column'));
-    }
-
-    if (this.channelHasField('row')) {
-      marks.push(getTitleGroup(this, 'row'));
-    }
-
-    // vals(this.component.axisGroups),
-    // this.assembleLabelGroups(),
-
-
-    marks.push({
+    const marks = [{
       ...(data.length > 0 ? {data: data} : {}),
       ...mark,
       ...this.child.assembleGroup()
-    });
+    }];
 
     return marks.map(this.correctDataNames);
   }
@@ -304,36 +338,6 @@ function getFacetGroupProperties(model: FacetModel) {
     ...childSizeEncodeEntryMixins(model, 'height'),
     ...(hasSubPlotWithXy(model) ? child.assembleParentGroupProperties(mergedCellConfig) : {})
   };
-}
-
-// TODO: move the rest of the file src/compile/facet/*.ts
-
-function parseAxisGroups(model: FacetModel, channel: 'x' | 'y') {
-  // TODO: add a case where inner spec is not a unit (facet/layer/concat)
-  let axisGroup: any = null;
-
-  const child = model.child;
-  // FIXME support non unit child
-  if (child instanceof UnitModel && child.channelHasField(channel)) {
-    if (child.component.axes[channel]) {
-      if (true) { // the channel has shared axes
-
-        // add a group for the shared axes
-        axisGroup = getSharedAxisGroup(model, channel);
-
-        if (child.component.axes[channel] && gridShow(child, channel)) { // show inner grid
-          // add inner axis (aka axis that shows only grid to )
-          child.component.axes[channel] = [parseGridAxis(channel, child)];
-        } else {
-          // Delete existing child axes
-          delete child.component.axes[channel];
-        }
-      } else {
-        // TODO: implement independent axes support
-      }
-    }
-  }
-  return axisGroup;
 }
 
 
@@ -387,28 +391,3 @@ export function getLabelGroup(model: FacetModel, channel: 'row' | 'column') {
   });
 }
 
-export function getTitleGroup(model: FacetModel, channel: 'row' | 'column') {
-  const sizeChannel = channel === 'row' ? 'height' : 'width';
-  const fieldDef = model.facet[channel];
-  return getTextHeader({
-    channel,
-    name: model.getName(`${channel}-title`),
-    roleType: 'title',
-
-    // TODO: support customization
-    textEncodeMixins: {
-      fontWeight: {value: 'bold'}
-    },
-
-    // TODO: support customizing row title orientation (horizontal / vertical)
-    textOrient: (channel === 'row' ? 'vertical' : undefined),
-    textRole: `${channel}-title`,
-
-    // TODO: customize title
-    textRef: {value: fieldDefTitle(fieldDef, model.config)},
-
-    // TODO: customize alignment
-    // FIXME: this is not working.  Need to wait for Jeff's layout update that include title role
-    positionRef: {signal: `0.5 * ${sizeChannel}`}
-  });
-}

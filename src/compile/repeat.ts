@@ -133,9 +133,9 @@ export class RepeatModel extends Model {
     }
   }
 
-  public parseAxis() {
+  public parseAxisAndHeader() {
     for (const child of this.children) {
-      child.parseAxis();
+      child.parseAxisAndHeader();
     }
   }
 
@@ -186,7 +186,8 @@ export class RepeatModel extends Model {
   public assembleLayout(): VgLayout {
     // TODO: allow customization
     return {
-      padding: {row: 10, column: 10, header: 10},
+      padding: {row: 10, column: 10},
+      offset: 10,
       columns: this.repeat && this.repeat.row ? this.repeat.row.length : 1,
       bounds: 'full',
       align: 'all'

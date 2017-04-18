@@ -4,7 +4,7 @@ import {assert} from 'chai';
 import {Axis} from '../../src/axis';
 import {ROW, SHAPE} from '../../src/channel';
 import * as facet from '../../src/compile/facet';
-import {FacetModel, getLabelGroup, getTitleGroup} from '../../src/compile/facet';
+import {FacetModel, getLabelGroup} from '../../src/compile/facet';
 import {defaultConfig} from '../../src/config';
 import {Facet} from '../../src/facet';
 import {PositionFieldDef} from '../../src/fielddef';
@@ -343,82 +343,82 @@ describe('compile/facet', () => {
     });
   });
 
-  describe('getTitleGroup', () => {
-    const model = parseFacetModel({
-      facet: {
-        row: {field: 'a', type: 'ordinal'},
-        column: {field: 'a', type: 'ordinal'}
-      },
-      spec: {
-        mark: 'point',
-        encoding: {
-          x: {field: 'b', type: 'quantitative'},
-          y: {field: 'c', type: 'quantitative'}
-        }
-      }
-    });
+  // describe('getTitleGroup', () => {
+  //   const model = parseFacetModel({
+  //     facet: {
+  //       row: {field: 'a', type: 'ordinal'},
+  //       column: {field: 'a', type: 'ordinal'}
+  //     },
+  //     spec: {
+  //       mark: 'point',
+  //       encoding: {
+  //         x: {field: 'b', type: 'quantitative'},
+  //         y: {field: 'c', type: 'quantitative'}
+  //       }
+  //     }
+  //   });
 
-    describe('for column', () => {
-      const columnLabelGroup = getTitleGroup(model, 'column');
-      const {marks, ...columnTitleGroupTopLevelProps} = columnLabelGroup;
-      it('returns a header group mark with correct name, role, type, and from.', () => {
+  //   describe('for column', () => {
+  //     const columnLabelGroup = getTitleGroup(model, 'column');
+  //     const {marks, ...columnTitleGroupTopLevelProps} = columnLabelGroup;
+  //     it('returns a header group mark with correct name, role, type, and from.', () => {
 
-        assert.deepEqual(columnTitleGroupTopLevelProps, {
-          name: 'column-title',
-          type: 'group',
-          role: 'column-header'
-        });
-      });
-      const textMark = marks[0];
+  //       assert.deepEqual(columnTitleGroupTopLevelProps, {
+  //         name: 'column-title',
+  //         type: 'group',
+  //         role: 'column-header'
+  //       });
+  //     });
+  //     const textMark = marks[0];
 
-      it('contains a correct text mark with the correct role and encode as the only item in marks', () => {
-        assert.equal(marks.length, 1);
-        assert.deepEqual(textMark, {
-          type: 'text',
-          role: 'column-title',
-          encode: {
-            update: {
-              x: {signal: `0.5 * width`},
-              text: {value: 'a'},
-              fontWeight: {value: 'bold'},
-              align: {value: 'center'},
-              fill: {value: 'black'}
-            }
-          }
-        });
-      });
-    });
+  //     it('contains a correct text mark with the correct role and encode as the only item in marks', () => {
+  //       assert.equal(marks.length, 1);
+  //       assert.deepEqual(textMark, {
+  //         type: 'text',
+  //         role: 'column-title',
+  //         encode: {
+  //           update: {
+  //             x: {signal: `0.5 * width`},
+  //             text: {value: 'a'},
+  //             fontWeight: {value: 'bold'},
+  //             align: {value: 'center'},
+  //             fill: {value: 'black'}
+  //           }
+  //         }
+  //       });
+  //     });
+  //   });
 
-    describe('for row', () => {
-      const rowTitleGroup = getTitleGroup(model, 'row');
-      const {marks, ...rowTitleGroupTopLevelProps} = rowTitleGroup;
-      it('returns a header group mark with correct name, role, type, from, and encode.', () => {
+  //   describe('for row', () => {
+  //     const rowTitleGroup = getTitleGroup(model, 'row');
+  //     const {marks, ...rowTitleGroupTopLevelProps} = rowTitleGroup;
+  //     it('returns a header group mark with correct name, role, type, from, and encode.', () => {
 
-        assert.deepEqual(rowTitleGroupTopLevelProps, {
-          name: 'row-title',
-          type: 'group',
-          role: 'row-header'
-        });
-      });
-      const textMark = marks[0];
+  //       assert.deepEqual(rowTitleGroupTopLevelProps, {
+  //         name: 'row-title',
+  //         type: 'group',
+  //         role: 'row-header'
+  //       });
+  //     });
+  //     const textMark = marks[0];
 
-      it('contains a correct text mark with the correct role and encode as the only item in marks', () => {
-        assert.equal(marks.length, 1);
-        assert.deepEqual(textMark, {
-          type: 'text',
-          role: 'row-title',
-          encode: {
-            update: {
-              y: {signal: `0.5 * height`},
-              text: {value: 'a'},
-              angle: {value: 270},
-              fontWeight: {value: 'bold'},
-              align: {value: 'right'},
-              fill: {value: 'black'}
-            }
-          }
-        });
-      });
-    });
-  });
+  //     it('contains a correct text mark with the correct role and encode as the only item in marks', () => {
+  //       assert.equal(marks.length, 1);
+  //       assert.deepEqual(textMark, {
+  //         type: 'text',
+  //         role: 'row-title',
+  //         encode: {
+  //           update: {
+  //             y: {signal: `0.5 * height`},
+  //             text: {value: 'a'},
+  //             angle: {value: 270},
+  //             fontWeight: {value: 'bold'},
+  //             align: {value: 'right'},
+  //             fill: {value: 'black'}
+  //           }
+  //         }
+  //       });
+  //     });
+  //   });
+  // });
 });

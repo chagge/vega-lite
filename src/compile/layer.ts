@@ -117,15 +117,18 @@ export class LayerModel extends Model {
     });
   }
 
-  public parseAxis() {
+  public parseAxisAndHeader() {
     const axisComponent = this.component.axes = {};
 
-    this.children.forEach(child => {
-      child.parseAxis();
+    // TODO: read these from the resolve syntax
+    const scaleResolve = 'shared';
+    const axisResolve = 'shared';
 
-      // TODO: correctly implement independent axes
-      if (true) { // if shared/union scale
+    this.children.forEach(child => {
+      child.parseAxisAndHeader();
+      if (scaleResolve === 'shared' && axisResolve === 'shared') {// if shared/union scale
         keys(child.component.axes).forEach(channel => {
+          // FIXME: correct axis merging logic for layer
           // TODO: support multiple axes for shared scale
 
           // just use the first axis definition for each channel
@@ -133,12 +136,10 @@ export class LayerModel extends Model {
             axisComponent[channel] = child.component.axes[channel];
           }
         });
+      } else {
+        // TODO: correctly implement independent axes
       }
     });
-  }
-
-  public parseAxisGroup(): void {
-    return null;
   }
 
   public parseLegend() {
